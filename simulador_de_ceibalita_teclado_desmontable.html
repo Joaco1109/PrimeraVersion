@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Ceibalitas - Sargas, Sirio y Wezen</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Montserrat:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            color: #f8fafc;
+        }
+        .font-screen {
+            font-family: 'VT323', monospace;
+        }
+        .font-constellation {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* --- ESTILOS MODELO SARGAS (NEGRO MATE) --- */
+        .sargas-chassis {
+            background: #18181b;
+            border-color: #27272a;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            color: #f4f4f5;
+        }
+        .sargas-screen-frame {
+            background: #09090b;
+            border-color: #27272a;
+        }
+        .sargas-keyboard-base {
+            background: #27272a;
+            border-color: #3f3f46;
+        }
+        .sargas-key-switch {
+            background: #18181b;
+            border-color: #09090b;
+        }
+
+        /* --- ESTILOS MODELO SIRIO Y WEZEN (BLANCO / GRIS CLARO) --- */
+        .white-chassis {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            color: #1e293b;
+        }
+        .white-screen-frame {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        .white-keyboard-base {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+        .white-key-switch {
+            background: #94a3b8;
+            border-color: #64748b;
+        }
+
+        /* --- ESTILOS DE TECLAS Y MECANISMOS --- */
+        .key-switch {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+            border-radius: 5px;
+            position: relative;
+        }
+        
+        .key-switch::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 7px;
+            height: 7px;
+            background: #06b6d4;
+            border-radius: 50%;
+            box-shadow: 0 0 4px #06b6d4;
+        }
+
+        .key-button {
+            border-radius: 5px;
+            font-weight: 700;
+            cursor: grab;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s;
+        }
+
+        /* Teclas Sargas */
+        .sargas-key {
+            background: linear-gradient(145deg, #27272a, #18181b);
+            border-top: 1.5px solid #3f3f46;
+            border-left: 1.5px solid #3f3f46;
+            border-right: 1.5px solid #09090b;
+            border-bottom: 2.5px solid #000000;
+            color: #f4f4f5;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+        }
+
+        /* Teclas Sirio / Wezen */
+        .white-key {
+            background: linear-gradient(145deg, #334155, #1e293b);
+            border-top: 1.5px solid #475569;
+            border-left: 1.5px solid #475569;
+            border-right: 1.5px solid #0f172a;
+            border-bottom: 2.5px solid #020617;
+            color: #f8fafc;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+        }
+
+        .key-button:active {
+            cursor: grabbing;
+        }
+
+        .key-button:hover {
+            filter: brightness(1.25);
+            transform: translateY(-2px);
+        }
+
+        .key-button.popped {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(1.2) rotate(15deg);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        /* Display Pantalla Retro */
+        .screen-glass {
+            background-color: #030712;
+            border: 3px solid #1f2937;
+            box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen-glass::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .constellation-svg {
+            position: absolute;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        /* Sticker de Número de Serie */
+        .sn-sticker {
+            background: #fef08a;
+            color: #1e293b;
+            font-family: monospace;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px dashed #ca8a04;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-2 sm:p-4 md:p-6">
+
+    <!-- Header / Buscador de Número de Serie -->
+    <header class="text-center my-1 w-full max-w-4xl flex flex-col items-center gap-2">
+        <div class="flex flex-wrap items-center justify-center gap-3">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-laptop text-cyan-400"></i> Ceibalitas Interactivas
+            </h1>
+            <span id="model-badge" class="bg-cyan-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow">
+                Model: WEZEN
+            </span>
+        </div>
+
+        <!-- Barra de Búsqueda de S/N -->
+        <div class="w-full max-w-md flex items-center gap-2 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700 shadow-md">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="sn-search-input" placeholder="Buscar por S/N (ej: CEIBAL-WEZEN-045 o 45)..." 
+                    class="w-full pl-8 pr-3 py-1.5 bg-slate-900 text-xs sm:text-sm text-cyan-300 placeholder-slate-500 rounded-lg border border-slate-700 focus:outline-none focus:border-cyan-500 font-mono">
+            </div>
+            <button id="search-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition">
+                Buscar
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenedor Navegación + Laptop -->
+    <div class="w-full max-w-5xl flex items-center justify-between gap-2 md:gap-4 my-auto">
+        
+        <!-- Flecha Izquierda -->
+        <button id="prev-btn" class="p-3 md:p-5 bg-slate-800/90 hover:bg-cyan-600 text-white rounded-full transition transform hover:scale-110 active:scale-95 shadow-lg border border-slate-700 flex items-center justify-center text-xl md:text-2xl" title="Anterior Equipo">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <!-- Contenedor Principal de la Ceibalita Activa -->
+        <main class="flex-1 flex flex-col items-center">
+            
+            <div id="laptop-chassis" class="relative w-full max-w-3xl p-4 sm:p-6 md:p-8 rounded-2xl border-4 transition-all duration-300 flex flex-col items-center overflow-hidden white-chassis">
+                
+                <!-- Arte de Constelación de fondo (SVG) -->
+                <svg id="constellation-bg" class="constellation-svg" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Dinámico según modelo -->
+                </svg>
+
+                <!-- PANTALLA Y SECCIÓN SUPERIOR -->
+                <div id="laptop-screen-frame" class="w-full p-3 sm:p-4 rounded-xl border-2 mb-4 shadow-md flex flex-col items-center relative z-10 white-screen-frame">
+                    
+                    <!-- Pantalla LCD / Consola -->
+                    <div class="w-full h-36 sm:h-44 screen-glass rounded-lg p-3 md:p-4 text-cyan-400 font-screen flex flex-col justify-between relative">
+                        
+                        <!-- Barra Superior del Sistema -->
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-1 text-xs tracking-wider">
+                            <span id="screen-model-title">MODEL: CAN MAYOR WEZEN</span>
+                            <span class="flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-cyan-400"></i>
+                                <span id="key-count-display">Teclas: 46/46</span>
+                            </span>
+                        </div>
+
+                        <!-- Estado Central -->
+                        <div class="my-auto text-center">
+                            <div id="screen-status" class="text-base sm:text-xl font-bold text-cyan-300">
+                                ¡Ceibalita encendida! Haz clic en las teclas para desmontarlas.
+                            </div>
+                            <div id="screen-sn-display" class="text-xs text-amber-400 mt-1 font-mono">
+                                S/N: CEIBAL-WEZEN-001
+                            </div>
+                            <div id="screen-missing-list" class="text-xs text-slate-400 mt-1 max-h-12 overflow-y-auto px-2">
+                                Teclas removidas: Ninguna
+                            </div>
+                        </div>
+
+                        <!-- Pie de Pantalla -->
+                        <div class="text-[10px] sm:text-xs text-slate-500 flex justify-between">
+                            <span>[Estado: Persistencia S/N Activa]</span>
+                            <span id="constellation-subtitle">Delta de Can Mayor</span>
+                        </div>
+                    </div>
+
+                    <!-- Detalles del Marco de Pantalla -->
+                    <div class="w-full flex justify-between items-center mt-2 px-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2.5 h-2.5 bg-black rounded-full border border-slate-500 flex items-center justify-center">
+                                <div class="w-1 h-1 bg-cyan-400 rounded-full"></div>
+                            </div>
+                            <span class="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Cam HD</span>
+                        </div>
+                        
+                        <!-- Sticker físico con S/N -->
+                        <div id="physical-sn-sticker" class="sn-sticker text-[10px] px-2 py-0.5 rounded tracking-wider">
+                            S/N: CEIBAL-WEZEN-001
+                        </div>
+
+                        <!-- Logo impreso en el marco -->
+                        <div id="brand-logo" class="text-xs font-black tracking-widest uppercase text-slate-500">
+                            Plan Ceibal
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BISAGRA CENTRADA -->
+                <div class="w-1/3 h-2.5 bg-slate-700 rounded-full mb-4 border border-slate-600"></div>
+
+                <!-- TECLADO Y BASE INFERIOR -->
+                <div id="laptop-keyboard-base" class="w-full p-3 sm:p-5 rounded-xl border-2 shadow-inner relative z-10 white-keyboard-base">
+                    
+                    <!-- Barra de Estado e Indicadores -->
+                    <div class="flex justify-between items-center mb-2 px-1 text-xs">
+                        <div class="flex gap-2 items-center">
+                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" title="Batería"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#06b6d4]" title="SSD"></div>
+                        </div>
+                        <span id="keyboard-model-subtitle" class="font-constellation font-bold tracking-wider text-[11px] opacity-70 text-slate-700">
+                            CAN MAYOR - WEZEN
+                        </span>
+                        <button id="power-btn" class="w-5 h-5 rounded-full bg-red-500/80 text-white flex items-center justify-center text-[9px] hover:bg-red-600 transition" title="Reiniciar Pantalla">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </div>
+
+                    <!-- Matriz de Teclas (Sin puntos en la superficie) -->
+                    <div id="keyboard-grid" class="grid gap-1 sm:gap-1.5 p-2 bg-slate-900/40 rounded-lg border border-slate-700/50">
+                        <!-- Generado dinámicamente por JS -->
+                    </div>
+
+                    <!-- Touchpad -->
+                    <div class="mt-3 flex justify-center">
+                        <div id="touchpad" class="w-28 h-12 border rounded-lg flex flex-col justify-end p-1 border-slate-400 bg-slate-300/50">
+                            <div class="w-full h-px bg-slate-400"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Flecha Derecha -->
+        <button id="next-btn" class="p-3 md:p-5 bg-slate-800/90 hover:bg-cyan-600 text-white rounded-full transition transform hover:scale-110 active:scale-95 shadow-lg border border-slate-700 flex items-center justify-center text-xl md:text-2xl" title="Siguiente Equipo">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+    </div>
+
+    <!-- Selector Rápidos de Modelos y N° de Serie -->
+    <div class="w-full max-w-5xl mt-3 flex flex-wrap justify-between items-center gap-2 bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-xs">
+        <div class="flex items-center gap-2">
+            <span class="text-slate-400 font-bold">Modelos:</span>
+            <button class="model-select-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-cyan-600 text-white transition font-bold" data-model="0">WEZEN</button>
+            <button class="model-select-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-cyan-600 text-white transition font-bold" data-model="1">SIRIO</button>
+            <button class="model-select-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-cyan-600 text-white transition font-bold" data-model="2">SARGAS</button>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-slate-400 font-bold">N° Serie del Modelo:</span>
+            <select id="sn-dropdown" class="bg-slate-800 text-cyan-300 font-mono px-2 py-1 rounded border border-slate-700 focus:outline-none">
+                <!-- Se llena dinámicamente del 001 al 100 -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Panel de Control y Bandeja -->
+    <footer class="w-full max-w-5xl mt-3 flex flex-col md:flex-row gap-4 justify-between items-stretch">
+        
+        <!-- Panel de Acciones -->
+        <div class="flex-1 bg-slate-800/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-slate-700 flex flex-col justify-between">
+            <h3 class="font-bold text-white text-xs md:text-sm mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-screwdriver-wrench text-cyan-400"></i> Opciones de Mantenimiento
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <button id="reset-btn" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2 shadow">
+                    <i class="fa-solid fa-rotate-left"></i> Restaurar Teclas
+                </button>
+                <button id="pop-random-btn" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-2 shadow">
+                    <i class="fa-solid fa-hand"></i> Arrancar Tecla
+                </button>
+            </div>
+            <div class="mt-3 flex justify-between items-center text-xs text-slate-300">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="sound-toggle" checked class="w-4 h-4 accent-cyan-500 rounded">
+                    <span>Efectos de Sonido</span>
+                </label>
+                <button id="clear-storage-btn" class="text-slate-400 hover:text-red-400 text-[11px] underline">
+                    Borrar Memoria de Teclas
+                </button>
+            </div>
+        </div>
+
+        <!-- Bandeja de Piezas Extraídas -->
+        <div class="flex-1 bg-slate-900/90 p-4 rounded-xl shadow-inner border border-slate-800 flex flex-col justify-between min-h-[90px]">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-slate-300 text-xs md:text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-box text-amber-500"></i> Teclas Desmontadas del Equipo
+                </h3>
+                <span id="tray-count" class="text-xs bg-slate-800 text-cyan-400 px-2 py-0.5 rounded-full font-bold border border-slate-700">0</span>
+            </div>
+            <div id="key-tray" class="flex flex-wrap gap-1.5 p-2 bg-slate-950/60 rounded-lg min-h-[45px] max-h-[85px] overflow-y-auto items-center border border-slate-800">
+                <span id="empty-tray-msg" class="text-xs text-slate-500 italic mx-auto">Sin teclas desmontadas en esta Ceibalita.</span>
+            </div>
+        </div>
+
+    </footer>
+
+    <!-- Lógica JavaScript -->
+    <script>
+        // Especificación Exacta de los 3 Modelos
+        const MODELS = [
+            {
+                id: 'WEZEN',
+                name: 'CAN MAYOR WEZEN',
+                subtitle: 'CAN MAYOR - WEZEN',
+                constellationTitle: 'CAN MAYOR',
+                constellationName: 'WEZEN',
+                constellationSub: 'Delta de Can Mayor',
+                chassisClass: 'white-chassis',
+                screenFrameClass: 'white-screen-frame',
+                keyboardBaseClass: 'white-keyboard-base',
+                keyClass: 'white-key',
+                keySwitchClass: 'white-key-switch',
+                logo: 'Plan Ceibal',
+                badgeBg: 'bg-amber-500 text-slate-950 border border-amber-300',
+                svgConstellation: `
+                    <!-- Grafica Can Mayor Wezen exacta -->
+                    <g stroke="#334155" stroke-width="2.5" fill="none" opacity="0.75">
+                        <!-- Estrellas / Nodos -->
+                        <line x1="230" y1="140" x2="320" y2="150" />
+                        <line x1="320" y1="150" x2="350" y2="175" />
+                        <line x1="350" y1="175" x2="385" y2="140" />
+                        
+                        <!-- Linea vertical inclinada hacia abajo -->
+                        <line x1="350" y1="175" x2="338" y2="210" />
+                        <line x1="338" y1="210" x2="295" y2="290" />
+                        <line x1="295" y1="290" x2="235" y2="280" />
+
+                        <!-- Punto intermedio central suelto -->
+                        <circle cx="312" cy="207" r="3" fill="#334155"/>
+
+                        <!-- Destaque Amarillo en la estrella WEZEN -->
+                        <circle cx="350" cy="175" r="16" fill="#f59e0b" opacity="0.85"/>
+                        <circle cx="350" cy="175" r="5" fill="#1e293b"/>
+
+                        <!-- Demas Estrellas -->
+                        <circle cx="230" cy="140" r="4.5" fill="#334155"/>
+                        <circle cx="320" cy="150" r="4.5" fill="#334155"/>
+                        <circle cx="385" cy="140" r="4.5" fill="#334155"/>
+                        <circle cx="338" cy="210" r="3.5" fill="#334155"/>
+                        <circle cx="295" cy="290" r="6" fill="#334155"/>
+                        <circle cx="235" cy="280" r="5" fill="#334155"/>
+                    </g>
+                    <!-- Textos oficiales en tapa -->
+                    <text x="65" y="70" fill="#475569" font-size="14" font-family="Montserrat" font-weight="700" letter-spacing="1">CAN MAYOR</text>
+                    <text x="65" y="98" fill="#1e293b" font-size="32" font-family="Montserrat" font-weight="900" letter-spacing="0.5">WEZEN</text>
+                    <text x="65" y="115" fill="#64748b" font-size="11" font-family="Montserrat" font-weight="600">Delta de Can Mayor</text>
+                    
+                    <!-- Logo Plan Ceibal Abajo a la Derecha -->
+                    <g transform="translate(480, 290)">
+                        <path d="M20,0 C25,10 20,20 10,20 C0,20 -5,10 0,0 C5,-5 15,-5 20,0 Z" fill="#334155" opacity="0.8"/>
+                        <path d="M10,25 C20,25 25,15 20,5 C15,-5 5,-5 0,5 C-5,15 0,25 10,25 Z" fill="#475569" opacity="0.8"/>
+                        <text x="-35" y="38" fill="#1e293b" font-size="14" font-family="Montserrat" font-weight="900" letter-spacing="0.5">Plan Ceibal</text>
+                    </g>
+                `
+            },
+            {
+                id: 'SIRIO',
+                name: 'CAN MAYOR SIRIO',
+                subtitle: 'CAN MAYOR - SIRIO',
+                constellationTitle: 'CAN MAYOR',
+                constellationName: 'SIRIO',
+                constellationSub: 'Alfa de Can Mayor',
+                chassisClass: 'white-chassis',
+                screenFrameClass: 'white-screen-frame',
+                keyboardBaseClass: 'white-keyboard-base',
+                keyClass: 'white-key',
+                keySwitchClass: 'white-key-switch',
+                logo: 'Plan Ceibal',
+                badgeBg: 'bg-slate-200 text-slate-800 border border-slate-300',
+                svgConstellation: `
+                    <!-- Grafica Can Mayor Sirio -->
+                    <g stroke="#334155" stroke-width="2.5" fill="none" opacity="0.75">
+                        <line x1="430" y1="110" x2="470" y2="120" />
+                        <line x1="430" y1="110" x2="390" y2="200" />
+                        <line x1="390" y1="200" x2="380" y2="240" />
+                        <line x1="380" y1="240" x2="395" y2="270" />
+                        <line x1="395" y1="270" x2="460" y2="260" />
+                        <line x1="380" y1="240" x2="350" y2="300" />
+                        
+                        <circle cx="430" cy="110" r="15" fill="#f59e0b" opacity="0.85"/>
+                        <circle cx="430" cy="110" r="5" fill="#1e293b"/>
+
+                        <circle cx="470" cy="120" r="4.5" fill="#334155"/>
+                        <circle cx="390" cy="200" r="4.5" fill="#334155"/>
+                        <circle cx="380" cy="240" r="4.5" fill="#334155"/>
+                        <circle cx="395" cy="270" r="4.5" fill="#334155"/>
+                        <circle cx="460" cy="260" r="4.5" fill="#334155"/>
+                        <circle cx="350" cy="300" r="4.5" fill="#334155"/>
+                    </g>
+                    <text x="65" y="70" fill="#475569" font-size="14" font-family="Montserrat" font-weight="700">CAN MAYOR</text>
+                    <text x="65" y="98" fill="#1e293b" font-size="32" font-family="Montserrat" font-weight="900">SIRIO</text>
+                    <text x="65" y="115" fill="#64748b" font-size="11" font-family="Montserrat" font-weight="600">Alfa de Can Mayor</text>
+                    
+                    <g transform="translate(480, 290)">
+                        <text x="-35" y="38" fill="#1e293b" font-size="14" font-family="Montserrat" font-weight="900">Plan Ceibal</text>
+                    </g>
+                `
+            },
+            {
+                id: 'SARGAS',
+                name: 'ESCORPIO SARGAS',
+                subtitle: 'ESCORPIO - SARGAS',
+                constellationTitle: 'ESCORPIO',
+                constellationName: 'SARGAS',
+                constellationSub: 'T de Escorpio',
+                chassisClass: 'sargas-chassis',
+                screenFrameClass: 'sargas-screen-frame',
+                keyboardBaseClass: 'sargas-keyboard-base',
+                keyClass: 'sargas-key',
+                keySwitchClass: 'sargas-key-switch',
+                logo: 'Ceibal',
+                badgeBg: 'bg-zinc-800 text-cyan-400 border border-cyan-500/30',
+                svgConstellation: `
+                    <!-- Grafica Escorpio Sargas -->
+                    <g stroke="#06b6d4" stroke-width="2.5" fill="none" opacity="0.6">
+                        <circle cx="210" cy="90" r="14" fill="#06b6d4" opacity="0.6"/>
+                        <circle cx="210" cy="90" r="6" fill="#fff"/>
+                        <line x1="210" y1="90" x2="235" y2="115" />
+                        <line x1="235" y1="115" x2="250" y2="135" />
+                        <line x1="250" y1="135" x2="225" y2="155" />
+                        <line x1="210" y1="90" x2="210" y2="150" />
+                        <line x1="210" y1="150" x2="230" y2="190" />
+                        <line x1="230" y1="190" x2="270" y2="210" />
+                        <line x1="270" y1="210" x2="300" y2="250" />
+                        <line x1="300" y1="250" x2="320" y2="300" />
+                        <line x1="320" y1="300" x2="310" y2="330" />
+                        <line x1="310" y1="330" x2="340" y2="340" />
+                        <line x1="340" y1="340" x2="355" y2="310" />
+                        
+                        <circle cx="235" cy="115" r="4" fill="#06b6d4"/>
+                        <circle cx="250" cy="135" r="4" fill="#06b6d4"/>
+                        <circle cx="225" cy="155" r="4" fill="#06b6d4"/>
+                        <circle cx="210" cy="150" r="4" fill="#06b6d4"/>
+                        <circle cx="230" cy="190" r="4" fill="#06b6d4"/>
+                        <circle cx="270" cy="210" r="4" fill="#06b6d4"/>
+                        <circle cx="300" cy="250" r="4" fill="#06b6d4"/>
+                        <circle cx="320" cy="300" r="4" fill="#06b6d4"/>
+                        <circle cx="310" cy="330" r="4" fill="#06b6d4"/>
+                        <circle cx="340" cy="340" r="4" fill="#06b6d4"/>
+                        <circle cx="355" cy="310" r="4" fill="#06b6d4"/>
+                    </g>
+                    <text x="65" y="70" fill="#ffffff" font-size="14" font-family="Montserrat" font-weight="700" opacity="0.5">ESCORPIO</text>
+                    <text x="65" y="98" fill="#ffffff" font-size="32" font-family="Montserrat" font-weight="900" opacity="0.8">SARGAS</text>
+                    <text x="65" y="115" fill="#a1a1aa" font-size="11" font-family="Montserrat" font-weight="600">T de Escorpio</text>
+                `
+            }
+        ];
+
+        // Layout de Teclado
+        const keyboardLayout = [
+            ['Esc', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'Backspace'],
+            ['Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Enter'],
+            ['Ctrl', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ'],
+            ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '↑'],
+            ['Ceibal', 'Alt', 'Espacio', 'AltGr', '←', '↓', '→']
+        ];
+
+        // Estado del Aplicativo
+        let currentModelIdx = 0; // 0: WEZEN, 1: SIRIO, 2: SARGAS
+        let currentSNNumber = 1;  // 1 a 100
+        
+        // Almacenamiento global de teclas quitadas por S/N
+        // Estructura: { 'CEIBAL-WEZEN-001': Set(['A', 'B']), ... }
+        let missingKeysStore = {};
+
+        let totalKeysCount = 46;
+        let audioCtx = null;
+
+        // Generar S/N string
+        function getSNString(modelIdx, snNum) {
+            const m = MODELS[modelIdx];
+            const numStr = String(snNum).padStart(3, '0');
+            return `CEIBAL-${m.id}-${numStr}`;
+        }
+
+        // Cargar desde LocalStorage
+        function loadStorage() {
+            try {
+                const data = localStorage.getItem('ceibalita_missing_keys_db');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    for (let sn in parsed) {
+                        missingKeysStore[sn] = new Set(parsed[sn]);
+                    }
+                }
+            } catch(e) {
+                console.warn("Storage error", e);
+            }
+        }
+
+        // Guardar en LocalStorage
+        function saveStorage() {
+            try {
+                const toSave = {};
+                for (let sn in missingKeysStore) {
+                    if (missingKeysStore[sn].size > 0) {
+                        toSave[sn] = Array.from(missingKeysStore[sn]);
+                    }
+                }
+                localStorage.setItem('ceibalita_missing_keys_db', JSON.stringify(toSave));
+            } catch(e) {
+                console.warn("Storage save error", e);
+            }
+        }
+
+        // Obtener teclas quitadas del equipo actual
+        function getCurrentMissingSet() {
+            const sn = getSNString(currentModelIdx, currentSNNumber);
+            if (!missingKeysStore[sn]) {
+                missingKeysStore[sn] = new Set();
+            }
+            return missingKeysStore[sn];
+        }
+
+        // Sonidos Web Audio API
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playPopSound() {
+            if (!document.getElementById('sound-toggle').checked) return;
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(360, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        function playSnapSound() {
+            if (!document.getElementById('sound-toggle').checked) return;
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(480, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        // Llenar Dropdown de S/N
+        function updateSNDropdown() {
+            const select = document.getElementById('sn-dropdown');
+            select.innerHTML = '';
+            for (let i = 1; i <= 100; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = `#${String(i).padStart(3, '0')}`;
+                if (i === currentSNNumber) opt.selected = true;
+                select.appendChild(opt);
+            }
+        }
+
+        // Renderizar la Laptop y estado
+        function renderLaptop() {
+            const model = MODELS[currentModelIdx];
+            const currentSN = getSNString(currentModelIdx, currentSNNumber);
+            const activeMissing = getCurrentMissingSet();
+
+            // 1. Badges y Títulos
+            const badge = document.getElementById('model-badge');
+            badge.innerText = `MODELO: ${model.id}`;
+            badge.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow ${model.badgeBg}`;
+
+            document.getElementById('screen-model-title').innerText = `MODEL: ${model.name}`;
+            document.getElementById('screen-sn-display').innerText = `S/N: ${currentSN}`;
+            document.getElementById('physical-sn-sticker').innerText = `S/N: ${currentSN}`;
+            document.getElementById('constellation-subtitle').innerText = model.constellationSub;
+            document.getElementById('brand-logo').innerText = model.logo;
+            document.getElementById('keyboard-model-subtitle').innerText = model.subtitle;
+            document.getElementById('constellation-bg').innerHTML = model.svgConstellation;
+
+            // 2. Estilos del Chasis
+            const chassis = document.getElementById('laptop-chassis');
+            chassis.className = `relative w-full max-w-3xl p-4 sm:p-6 md:p-8 rounded-2xl border-4 transition-all duration-300 flex flex-col items-center overflow-hidden ${model.chassisClass}`;
+
+            const screenFrame = document.getElementById('laptop-screen-frame');
+            screenFrame.className = `w-full p-3 sm:p-4 rounded-xl border-2 mb-4 shadow-md flex flex-col items-center relative z-10 ${model.screenFrameClass}`;
+
+            const kbBase = document.getElementById('laptop-keyboard-base');
+            kbBase.className = `w-full p-3 sm:p-5 rounded-xl border-2 shadow-inner relative z-10 ${model.keyboardBaseClass}`;
+
+            // Touchpad styling ajustado
+            const touchpad = document.getElementById('touchpad');
+            if (model.id === 'SARGAS') {
+                touchpad.className = 'w-28 h-12 border rounded-lg flex flex-col justify-end p-1 border-slate-700 bg-slate-800/40';
+            } else {
+                touchpad.className = 'w-28 h-12 border rounded-lg flex flex-col justify-end p-1 border-slate-400 bg-slate-300/50';
+            }
+
+            // 3. Renderizar Teclado Limpio (Sin puntos arriba)
+            const grid = document.getElementById('keyboard-grid');
+            grid.innerHTML = '';
+            totalKeysCount = 0;
+
+            keyboardLayout.forEach((row, rowIndex) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex gap-1 sm:gap-1.5 justify-center w-full';
+
+                row.forEach((keyLabel) => {
+                    totalKeysCount++;
+                    const keyId = `key-${currentSN}-${rowIndex}-${keyLabel.replace(/\s+/g, '')}`;
+
+                    // Socket / Interruptor abajo
+                    const switchDiv = document.createElement('div');
+                    switchDiv.className = `key-switch flex items-center justify-center h-7 sm:h-9 text-[9px] font-bold text-slate-500 ${model.keySwitchClass}`;
+                    switchDiv.id = `switch-${keyId}`;
+
+                    // Anchos adaptativos
+                    let widthClass = 'w-6 sm:w-8';
+                    if (keyLabel === 'Backspace' || keyLabel === 'Enter' || keyLabel === 'Shift') widthClass = 'w-10 sm:w-14';
+                    if (keyLabel === 'Espacio') widthClass = 'w-28 sm:w-44';
+                    if (keyLabel === 'Tab' || keyLabel === 'Ctrl' || keyLabel === 'Ceibal') widthClass = 'w-8 sm:w-11';
+                    switchDiv.className += ` ${widthClass}`;
+
+                    // Tecla física encima (si no ha sido desmontada)
+                    if (!activeMissing.has(keyLabel)) {
+                        const keyBtn = document.createElement('button');
+                        keyBtn.className = `key-button w-full h-full flex items-center justify-center text-xs ${model.keyClass}`;
+                        keyBtn.innerText = keyLabel === 'Espacio' ? '' : keyLabel;
+                        keyBtn.id = keyId;
+                        keyBtn.setAttribute('data-label', keyLabel);
+
+                        if (keyLabel === 'Ceibal') {
+                            keyBtn.style.background = 'linear-gradient(145deg, #06b6d4, #0891b2)';
+                            keyBtn.style.color = '#fff';
+                            keyBtn.innerText = 'Ceibal';
+                        }
+
+                        keyBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            popKey(keyBtn, keyLabel);
+                        });
+
+                        switchDiv.appendChild(keyBtn);
+                    }
+
+                    rowDiv.appendChild(switchDiv);
+                });
+
+                grid.appendChild(rowDiv);
+            });
+
+            // 4. Actualizar Selectores de UI y Consola
+            updateSNDropdown();
+            renderTray();
+            updateScreenDisplay();
+        }
+
+        // Función para Quitar Tecla con Animación
+        function popKey(keyBtn, keyLabel) {
+            const activeMissing = getCurrentMissingSet();
+            if (activeMissing.has(keyLabel)) return;
+
+            playPopSound();
+
+            const rect = keyBtn.getBoundingClientRect();
+            keyBtn.classList.add('popped');
+            keyBtn.style.left = `${rect.left}px`;
+            keyBtn.style.top = `${rect.top}px`;
+            keyBtn.style.width = `${rect.width}px`;
+            keyBtn.style.height = `${rect.height}px`;
+
+            document.body.appendChild(keyBtn);
+
+            activeMissing.add(keyLabel);
+            saveStorage();
+
+            const tray = document.getElementById('key-tray');
+            const trayRect = tray.getBoundingClientRect();
+
+            setTimeout(() => {
+                keyBtn.style.left = `${trayRect.left + 10 + Math.random() * (trayRect.width - 40)}px`;
+                keyBtn.style.top = `${trayRect.top + 5 + Math.random() * (trayRect.height - 30)}px`;
+                keyBtn.style.transform = `rotate(${Math.random() * 60 - 30}deg) scale(0.9)`;
+            }, 40);
+
+            setTimeout(() => {
+                keyBtn.remove();
+                renderLaptop();
+            }, 400);
+        }
+
+        // Renderizar la Bandeja de Teclas
+        function renderTray() {
+            const tray = document.getElementById('key-tray');
+            tray.innerHTML = '';
+            const activeMissing = getCurrentMissingSet();
+
+            document.getElementById('tray-count').innerText = activeMissing.size;
+
+            if (activeMissing.size === 0) {
+                tray.innerHTML = `<span id="empty-tray-msg" class="text-xs text-slate-500 italic mx-auto">Sin teclas desmontadas en este equipo.</span>`;
+                return;
+            }
+
+            activeMissing.forEach((keyLabel) => {
+                const trayItem = document.createElement('div');
+                trayItem.className = 'bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded text-xs cursor-pointer border border-slate-600 flex items-center gap-1.5 shadow-sm transition';
+                trayItem.innerHTML = `<span>${keyLabel === 'Espacio' ? '␣ Espacio' : keyLabel}</span> <i class="fa-solid fa-plus text-[9px] text-cyan-400"></i>`;
+                trayItem.title = "Haz clic para colocar de vuelta";
+
+                trayItem.addEventListener('click', () => {
+                    restoreSingleKey(keyLabel);
+                });
+
+                tray.appendChild(trayItem);
+            });
+        }
+
+        // Reinstalar una Tecla
+        function restoreSingleKey(keyLabel) {
+            playSnapSound();
+            const activeMissing = getCurrentMissingSet();
+            activeMissing.delete(keyLabel);
+            saveStorage();
+            renderLaptop();
+        }
+
+        // Actualizar Consola de Pantalla LCD
+        function updateScreenDisplay() {
+            const activeMissing = getCurrentMissingSet();
+            const countDisplay = document.getElementById('key-count-display');
+            const screenStatus = document.getElementById('screen-status');
+            const missingList = document.getElementById('screen-missing-list');
+
+            const currentKeys = totalKeysCount - activeMissing.size;
+            countDisplay.innerText = `Teclas: ${currentKeys}/${totalKeysCount}`;
+
+            if (activeMissing.size === 0) {
+                screenStatus.innerText = "¡Teclado completo! Sistema operando normalmente.";
+                screenStatus.className = "text-base sm:text-xl font-bold text-cyan-300";
+                missingList.innerText = "Teclas removidas: Ninguna";
+            } else if (activeMissing.size < 6) {
+                screenStatus.innerText = `⚠️ Teclas Faltantes: ${activeMissing.size}`;
+                screenStatus.className = "text-base sm:text-xl font-bold text-amber-400";
+                missingList.innerText = "Removidas: " + Array.from(activeMissing).join(', ');
+            } else {
+                screenStatus.innerText = `🚨 TECLADO DESMONTADO (-${activeMissing.size})`;
+                screenStatus.className = "text-base sm:text-xl font-bold text-red-400 animate-pulse";
+                missingList.innerText = "Removidas: " + Array.from(activeMissing).join(', ');
+            }
+        }
+
+        // Navegar entre Equipos (Flecha Izquierda / Derecha)
+        function nextEquipment() {
+            currentSNNumber++;
+            if (currentSNNumber > 100) {
+                currentSNNumber = 1;
+                currentModelIdx = (currentModelIdx + 1) % MODELS.length;
+            }
+            renderLaptop();
+        }
+
+        function prevEquipment() {
+            currentSNNumber--;
+            if (currentSNNumber < 1) {
+                currentSNNumber = 100;
+                currentModelIdx = (currentModelIdx - 1 + MODELS.length) % MODELS.length;
+            }
+            renderLaptop();
+        }
+
+        // Búsqueda por Número de Serie
+        function performSearch() {
+            const input = document.getElementById('sn-search-input').value.trim().toUpperCase();
+            if (!input) return;
+
+            // Buscar coincidencia exacta o por número (1-100)
+            let targetModel = -1;
+            let targetSN = -1;
+
+            MODELS.forEach((m, idx) => {
+                if (input.includes(m.id)) {
+                    targetModel = idx;
+                }
+            });
+
+            // Extraer números
+            const numMatch = input.match(/\d+/);
+            if (numMatch) {
+                const val = parseInt(numMatch[0], 10);
+                if (val >= 1 && val <= 100) {
+                    targetSN = val;
+                }
+            }
+
+            if (targetModel !== -1 && targetSN !== -1) {
+                currentModelIdx = targetModel;
+                currentSNNumber = targetSN;
+            } else if (targetSN !== -1) {
+                currentSNNumber = targetSN;
+            } else if (targetModel !== -1) {
+                currentModelIdx = targetModel;
+            } else {
+                alert("Número de serie no encontrado. Ejemplo: CEIBAL-WEZEN-045 o simplemente 45.");
+                return;
+            }
+
+            renderLaptop();
+        }
+
+        // Eventos
+        document.getElementById('next-btn').addEventListener('click', nextEquipment);
+        document.getElementById('prev-btn').addEventListener('click', prevEquipment);
+
+        document.getElementById('search-btn').addEventListener('click', performSearch);
+        document.getElementById('sn-search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        // Cambiar Modelo mediante botones rápidos
+        document.querySelectorAll('.model-select-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                currentModelIdx = parseInt(e.target.getAttribute('data-model'), 10);
+                renderLaptop();
+            });
+        });
+
+        // Cambiar S/N mediante dropdown
+        document.getElementById('sn-dropdown').addEventListener('change', (e) => {
+            currentSNNumber = parseInt(e.target.value, 10);
+            renderLaptop();
+        });
+
+        // Restaurar Teclas del Equipo Actual
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            const activeMissing = getCurrentMissingSet();
+            if (activeMissing.size > 0) playSnapSound();
+            activeMissing.clear();
+            saveStorage();
+            renderLaptop();
+        });
+
+        // Arrancar Tecla Aleatoria
+        document.getElementById('pop-random-btn').addEventListener('click', () => {
+            const activeBtns = document.querySelectorAll('.key-switch .key-button');
+            if (activeBtns.length > 0) {
+                const randomBtn = activeBtns[Math.floor(Math.random() * activeBtns.length)];
+                const label = randomBtn.getAttribute('data-label');
+                popKey(randomBtn, label);
+            }
+        });
+
+        // Borrar Memoria Completa
+        document.getElementById('clear-storage-btn').addEventListener('click', () => {
+            try {
+                localStorage.removeItem('ceibalita_missing_keys_db');
+            } catch(e){}
+            missingKeysStore = {};
+            renderLaptop();
+        });
+
+        // Botón Power / Reboot pantalla
+        document.getElementById('power-btn').addEventListener('click', () => {
+            initAudio();
+            const screenStatus = document.getElementById('screen-status');
+            screenStatus.innerText = "Reinicio de BIOS...";
+            setTimeout(() => {
+                updateScreenDisplay();
+            }, 500);
+        });
+
+        // Inicialización al cargar la página
+        window.onload = () => {
+            loadStorage();
+            renderLaptop();
+        };
+    </script>
+</body>
+</html>
